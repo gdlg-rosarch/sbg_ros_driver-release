@@ -1,23 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sbg_driver)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
+add_compile_options(-std=c++11)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  geometry_msgs
+  message_generation
 )
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -44,11 +36,35 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(FILES
+  SbgGpsVelStatus.msg
+  SbgGpsPosStatus.msg
+  SbgMagStatus.msg
+  SbgShipMotionStatus.msg
+  SbgUtcTimeStatus.msg
+
+  SbgEkfEuler.msg
+  SbgGpsPos.msg
+  SbgMag.msg
+  SbgStatusCom.msg
+  SbgEkfNav.msg
+  SbgGpsRaw.msg
+  SbgOdoVel.msg
+  SbgStatusGeneral.msg
+  SbgEkfQuat.msg
+  SbgGpsVel.msg
+  SbgPressure.msg
+  SbgStatus.msg
+  SbgEvent.msg
+  SbgImuStatus.msg
+  SbgImuData.msg
+  SbgShipMotion.msg
+  SbgUtcTime.msg
+  SbgGpsHdt.msg
+  SbgMagCalib.msg
+  SbgStatusAiding.msg
+  SbgEkfStatus.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -65,10 +81,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -100,7 +117,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  # INCLUDE_DIRS sbgECom
+  INCLUDE_DIRS src
   # LIBRARIES ${PROJECT_NAME} 
 #  CATKIN_DEPENDS roscpp sensor_msgs std_msgs
   # DEPENDS sbgECom
@@ -112,18 +129,13 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+add_subdirectory(sbgECom)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/src
   ${PROJECT_SOURCE_DIR}/sbgECom/common
   ${PROJECT_SOURCE_DIR}/sbgECom/src
 )
-
-# file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/sbgECom/src/*.c)
-# file(GLOB_RECURSE COMMON_SRC ${PROJECT_SOURCE_DIR}/sbgECom/common/*.c)
-# list(REMOVE_ITEM COMMON_SRC ${PROJECT_SOURCE_DIR}/sbgECom/common/interfaces/sbgInterfaceSerialWin.c)
-
-# MESSAGE( STATUS ${COMMON_SRC})
 
 ## Declare a C++ library
 # add_library(sbg
@@ -136,9 +148,20 @@ include_directories(
 # add_dependencies(sbg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(ellipse src/ellipse.cpp ${SRC} ${COMMON_SRC})
+add_executable(ellipse
+  src/main.cpp
+  src/ellipse.cpp
+  src/ellipse_msg.cpp
+)
+
+add_executable(mag_calibration_ellipse
+  src/ellipse_mag.cpp
+  src/ellipse.cpp
+  src/ellipse_msg.cpp
+)
 
 target_compile_options(ellipse PRIVATE -fpermissive)
+target_compile_options(mag_calibration_ellipse PRIVATE -fpermissive)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -146,8 +169,12 @@ target_compile_options(ellipse PRIVATE -fpermissive)
 # add_dependencies(ellipse sbgECom)
 
 ## Specify libraries to link a library or executable target against
-add_subdirectory(sbgECom)
 target_link_libraries(ellipse
+   ${catkin_LIBRARIES}
+   sbgECom
+)
+
+target_link_libraries(mag_calibration_ellipse
    ${catkin_LIBRARIES}
    sbgECom
 )
@@ -167,25 +194,27 @@ target_link_libraries(ellipse
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS sbg sbg_node
+ install(TARGETS ellipse mag_calibration_ellipse
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+ install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".svn" EXCLUDE
+   PATTERN ".git" EXCLUDE
+ )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+# Mark other files for installation (e.g. launch and bag files, etc.)
+ install(FILES
+   launch/calibration_sbg_ellipse.launch
+   launch/sbg_ellipse.launch
+   config/ellipse_E_default.yaml
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ )
 
 #############
 ## Testing ##
