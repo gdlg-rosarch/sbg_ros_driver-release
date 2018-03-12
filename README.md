@@ -1,3 +1,26 @@
+## sbg_driver (kinetic) - 1.1.3-0
+
+The packages in the `sbg_driver` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic sbg_driver` on `Mon, 12 Mar 2018 10:49:53 -0000`
+
+The `sbg_driver` package was released.
+
+Version of package(s) in repository `sbg_driver`:
+
+- upstream repository: https://github.com/ENSTABretagneRobotics/sbg_ros_driver.git
+- release repository: https://github.com/ENSTABretagneRobotics/sbg_ros_driver-release.git
+- rosdistro version: `1.1.1-0`
+- old version: `1.1.2-0`
+- new version: `1.1.3-0`
+
+Versions of tools used:
+
+- bloom version: `0.6.2`
+- catkin_pkg version: `0.4.1`
+- rosdep version: `0.12.1`
+- rosdistro version: `0.6.6`
+- vcstools version: `0.1.40`
+
+
 ## sbg_driver (kinetic) - 1.1.2-0
 
 The packages in the `sbg_driver` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic sbg_driver` on `Mon, 12 Mar 2018 08:56:25 -0000`
